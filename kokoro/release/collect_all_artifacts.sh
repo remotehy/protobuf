@@ -40,8 +40,8 @@ mkdir -p protoc/linux_x86
 mkdir -p protoc/linux_x64
 # Because of maven unrelated reasonse the linux protoc binaries have a dummy .exe extension.
 # For the Google.Protobuf.Tools nuget, we don't want that exception, so we just remove it.
-cp ${INPUT_ARTIFACTS_DIR}/protoc-artifacts/target/linux/x86_32/protoc.exe protoc/linux_x86/protoc
-cp ${INPUT_ARTIFACTS_DIR}/protoc-artifacts/target/linux/x86_64/protoc.exe protoc/linux_x64/protoc
+cp ${INPUT_ARTIFACTS_DIR}/kokoro/release/protoc/target/linux/x86_32/protoc.exe protoc/linux_x86/protoc
+cp ${INPUT_ARTIFACTS_DIR}/kokoro/release/protoc/target/linux/x86_64/protoc.exe protoc/linux_x64/protoc
 
 mkdir -p protoc/macosx_x64
 cp ${INPUT_ARTIFACTS_DIR}/build64/src/protoc protoc/macosx_x64/protoc
@@ -50,6 +50,9 @@ cp ${INPUT_ARTIFACTS_DIR}/build64/src/protoc protoc/macosx_x64/protoc
 # TODO(jtattermusch): use "mono:5.14" docker image instead so we don't have to apt-get install
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
 echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+# NVidia has stopped publishing Cuda packages for Ubuntu 16.04, so we need to
+# delete this file to allow the apt update to run successfully.
+sudo rm -f /etc/apt/sources.list.d/cuda.list
 sudo apt update
 sudo apt-get install -y nuget
 

@@ -71,6 +71,7 @@ These are projects we know about implementing Protocol Buffers for other program
 * Kotlin: https://github.com/Kotlin/kotlinx.serialization
 * Kotlin: https://github.com/ButterCam/sisyphus
 * Kotlin: https://github.com/open-toast/protokt
+* Kotlin Multiplatform: https://github.com/streem/pbandk
 * Lua: https://code.google.com/p/protoc-gen-lua/
 * Lua: http://github.com/indygreg/lua-protobuf
 * Lua: https://github.com/Neopallium/lua-pb
@@ -202,3 +203,4 @@ There are miscellaneous other things you may find useful as a Protocol Buffers d
     * [vim-protolint: A protobuf linter for Vim](https://github.com/yoheimuta/vim-protolint)
 * [super-linter: Protocol Buffer lint as GitHub Action](https://github.com/github/super-linter)
 * [protoc-gen-fieldmask - A plugin to generate static type fieldmask paths](https://github.com/idodod/protoc-gen-fieldmask)
+* [protoc-gen-bq-schema - A protoc plugin to generate BigQuery schema files](https://github.com/GoogleCloudPlatform/protoc-gen-bq-schema)

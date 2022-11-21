@@ -38,12 +38,11 @@ page, check out the maven repo here:
   [https://repo1.maven.org/maven2/com/google/protobuf/protoc/](https://repo1.maven.org/maven2/com/google/protobuf/protoc/)
 
 These pre-built binaries are only provided for released versions. If you want
-to use the github master version at HEAD, or you need to modify protobuf code,
+to use the github main version at HEAD, or you need to modify protobuf code,
 or you are using C++, it's recommended to build your own protoc binary from
 source.
 
-If you would like to build protoc binary from source, see the [C++ Installation
-Instructions](src/README.md).
+If you would like to build protoc binary from source, see the [C++ Installation Instructions](src/README.md).
 
 Protobuf Runtime Installation
 -----------------------------
@@ -59,11 +58,11 @@ how to install protobuf runtime for that specific language:
 | Python                               | [python](python)                                            |
 | Objective-C                          | [objectivec](objectivec)                                    |
 | C#                                   | [csharp](csharp)                                            |
-| JavaScript                           | [js](js)                                                    |
 | Ruby                                 | [ruby](ruby)                                                |
 | Go                                   | [protocolbuffers/protobuf-go](https://github.com/protocolbuffers/protobuf-go)|
 | PHP                                  | [php](php)                                                  |
 | Dart                                 | [dart-lang/protobuf](https://github.com/dart-lang/protobuf) |
+| Javascript                           | [protocolbuffers/protobuf-javascript](https://github.com/protocolbuffers/protobuf-javascript)|
 
 Quick Start
 -----------
@@ -83,3 +82,10 @@ The complete documentation for Protocol Buffers is available via the
 web at:
 
 https://developers.google.com/protocol-buffers/
+
+Developer Community
+-------------------
+
+To be alerted to upcoming changes in Protocol Buffers and connect with protobuf developers and users,
+[join the Google Group](https://groups.google.com/g/protobuf).
+

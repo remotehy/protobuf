@@ -30,21 +30,21 @@
 
 // Author: haberman@google.com (Josh Haberman)
 
-#include <google/protobuf/pyext/map_container.h>
+#include "google/protobuf/pyext/map_container.h"
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
-#include <google/protobuf/stubs/logging.h>
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/map.h>
-#include <google/protobuf/map_field.h>
-#include <google/protobuf/message.h>
-#include <google/protobuf/pyext/message.h>
-#include <google/protobuf/pyext/message_factory.h>
-#include <google/protobuf/pyext/repeated_composite_container.h>
-#include <google/protobuf/pyext/scoped_pyobject_ptr.h>
-#include <google/protobuf/stubs/map_util.h>
+#include "google/protobuf/stubs/logging.h"
+#include "google/protobuf/stubs/common.h"
+#include "google/protobuf/map.h"
+#include "google/protobuf/map_field.h"
+#include "google/protobuf/message.h"
+#include "google/protobuf/pyext/message.h"
+#include "google/protobuf/pyext/message_factory.h"
+#include "google/protobuf/pyext/repeated_composite_container.h"
+#include "google/protobuf/pyext/scoped_pyobject_ptr.h"
 
 namespace google {
 namespace protobuf {
@@ -264,7 +264,7 @@ static bool PythonToMapValueRef(MapContainer* self, PyObject* obj,
     case FieldDescriptor::CPPTYPE_BOOL: {
       GOOGLE_CHECK_GET_BOOL(obj, value, false);
       value_ref->SetBoolValue(value);
-      return true;;
+      return true;
     }
     case FieldDescriptor::CPPTYPE_STRING: {
       std::string str;

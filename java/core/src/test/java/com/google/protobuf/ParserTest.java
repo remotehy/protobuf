@@ -117,7 +117,6 @@ public class ParserTest {
     assertRoundTripEquals(TestUtil.getAllSet());
   }
 
-
   @Test
   public void testParsePartial() throws Exception {
     assertParsePartial(TestRequired.parser(), TestRequired.newBuilder().setA(1).buildPartial());
@@ -195,11 +194,9 @@ public class ParserTest {
   @Test
   public void testParseUnknownFields() throws Exception {
     // All fields will be treated as unknown fields in emptyMessage.
-    TestEmptyMessage emptyMessage =
-        TestEmptyMessage.parser().parseFrom(TestUtil.getAllSet().toByteString());
+    TestEmptyMessage emptyMessage = TestEmptyMessage.parseFrom(TestUtil.getAllSet().toByteString());
     assertThat(emptyMessage.toByteString()).isEqualTo(TestUtil.getAllSet().toByteString());
   }
-
 
   @Test
   public void testOptimizeForSize() throws Exception {
@@ -278,7 +275,7 @@ public class ParserTest {
     // Parse TestParsingMerge.
     ExtensionRegistry registry = ExtensionRegistry.newInstance();
     UnittestProto.registerAllExtensions(registry);
-    TestParsingMerge parsingMerge = TestParsingMerge.parser().parseFrom(data, registry);
+    TestParsingMerge parsingMerge = TestParsingMerge.parseFrom(data, registry);
 
     // Required and optional fields should be merged.
     assertMessageMerged(parsingMerge.getRequiredAllTypes());

@@ -34,10 +34,6 @@
 Note that the golden messages exercise every known field type, thus this
 test ends up exercising and verifying nearly all of the parsing and
 serialization code in the whole library.
-
-TODO(kenton):  Merge with wire_format_test?  It doesn't make a whole lot of
-sense to call this a test of the "message" module, which only declares an
-abstract interface.
 """
 
 __author__ = 'gps@google.com (Gregory P. Smith)'
@@ -54,24 +50,20 @@ import warnings
 
 cmp = lambda x, y: (x > y) - (x < y)
 
+from google.protobuf.internal import api_implementation # pylint: disable=g-import-not-at-top
+from google.protobuf.internal import encoder
+from google.protobuf.internal import more_extensions_pb2
+from google.protobuf.internal import packed_field_test_pb2
+from google.protobuf.internal import test_proto3_optional_pb2
+from google.protobuf.internal import test_util
+from google.protobuf.internal import testing_refleaks
+from google.protobuf import descriptor
+from google.protobuf import message
+from google.protobuf.internal import _parameterized
 from google.protobuf import map_proto2_unittest_pb2
 from google.protobuf import map_unittest_pb2
 from google.protobuf import unittest_pb2
 from google.protobuf import unittest_proto3_arena_pb2
-from google.protobuf import descriptor_pb2
-from google.protobuf import descriptor
-from google.protobuf import descriptor_pool
-from google.protobuf import message_factory
-from google.protobuf import text_format
-from google.protobuf.internal import api_implementation
-from google.protobuf.internal import encoder
-from google.protobuf.internal import more_extensions_pb2
-from google.protobuf.internal import packed_field_test_pb2
-from google.protobuf.internal import test_util
-from google.protobuf.internal import test_proto3_optional_pb2
-from google.protobuf.internal import testing_refleaks
-from google.protobuf import message
-from google.protobuf.internal import _parameterized
 
 UCS2_MAXUNICODE = 65535
 
@@ -129,10 +121,13 @@ class MessageTest(unittest.TestCase):
     # TODO(jieluo): Fix cpp extension to raise error instead of warning.
     # b/27494216
     end_tag = encoder.TagBytes(1, 4)
-    if api_implementation.Type() == 'python':
+    if (api_implementation.Type() == 'python' or
+        api_implementation.Type() == 'upb'):
       with self.assertRaises(message.DecodeError) as context:
         msg.FromString(end_tag)
-      self.assertEqual('Unexpected end-group tag.', str(context.exception))
+      if api_implementation.Type() == 'python':
+        # Only pure-Python has an error message this specific.
+        self.assertEqual('Unexpected end-group tag.', str(context.exception))
 
     # Field number 0 is illegal.
     self.assertRaises(message.DecodeError, msg.FromString, b'\3\4')
@@ -476,6 +471,12 @@ class MessageTest(unittest.TestCase):
         '  bb: 3\n'
         '}\n')
     self.assertEqual(sub_msg.bb, 1)
+
+  def testAssignRepeatedField(self, message_module):
+    msg = message_module.NestedTestAllTypes()
+    msg.payload.repeated_int32[:] = [1, 2, 3, 4]
+    self.assertEqual(4, len(msg.payload.repeated_int32))
+    self.assertEqual([1, 2, 3, 4], msg.payload.repeated_int32)
 
   def testMergeFromRepeatedField(self, message_module):
     msg = message_module.TestAllTypes()
@@ -888,6 +889,7 @@ class MessageTest(unittest.TestCase):
 
   def testOneofClearField(self, message_module):
     m = message_module.TestAllTypes()
+    m.ClearField('oneof_field')
     m.oneof_uint32 = 11
     m.ClearField('oneof_field')
     if message_module is unittest_pb2:
@@ -1528,7 +1530,6 @@ class Proto2Test(unittest.TestCase):
     self.assertEqual(100, msg.optional_int32)
     self.assertEqual(200, msg.optional_fixed32)
 
-
   def test_documentation(self):
     # Also used by the interactive help() function.
     doc = pydoc.html.document(unittest_pb2.TestAllTypes, 'message')
@@ -1766,6 +1767,19 @@ class Proto3Test(unittest.TestCase):
 
     with self.assertRaises(TypeError):
       123 in msg.map_string_string
+
+  def testScalarMapComparison(self):
+    msg1 = map_unittest_pb2.TestMap()
+    msg2 = map_unittest_pb2.TestMap()
+
+    self.assertEqual(msg1.map_int32_int32, msg2.map_int32_int32)
+
+  def testMessageMapComparison(self):
+    msg1 = map_unittest_pb2.TestMap()
+    msg2 = map_unittest_pb2.TestMap()
+
+    self.assertEqual(msg1.map_int32_foreign_message,
+                     msg2.map_int32_foreign_message)
 
   def testMapGet(self):
     # Need to test that get() properly returns the default, even though the dict
@@ -2230,7 +2244,7 @@ class Proto3Test(unittest.TestCase):
 
   def testMapItems(self):
     # Map items used to have strange behaviors when use c extension. Because
-    # [] may reorder the map and invalidate any exsting iterators.
+    # [] may reorder the map and invalidate any existing iterators.
     # TODO(jieluo): Check if [] reordering the map is a bug or intended
     # behavior.
     msg = map_unittest_pb2.TestMap()
@@ -2454,7 +2468,25 @@ class Proto3Test(unittest.TestCase):
     with self.assertRaises(ValueError):
       unittest_proto3_arena_pb2.TestAllTypes(optional_string=u'\ud801\ud801')
 
+  def testCrashNullAA(self):
+    self.assertEqual(
+        unittest_proto3_arena_pb2.TestAllTypes.NestedMessage(),
+        unittest_proto3_arena_pb2.TestAllTypes.NestedMessage())
 
+  def testCrashNullAB(self):
+    self.assertEqual(
+        unittest_proto3_arena_pb2.TestAllTypes.NestedMessage(),
+        unittest_proto3_arena_pb2.TestAllTypes().optional_nested_message)
+
+  def testCrashNullBA(self):
+    self.assertEqual(
+        unittest_proto3_arena_pb2.TestAllTypes().optional_nested_message,
+        unittest_proto3_arena_pb2.TestAllTypes.NestedMessage())
+
+  def testCrashNullBB(self):
+    self.assertEqual(
+        unittest_proto3_arena_pb2.TestAllTypes().optional_nested_message,
+        unittest_proto3_arena_pb2.TestAllTypes().optional_nested_message)
 
 
 @testing_refleaks.TestCase
@@ -2539,66 +2571,34 @@ class PackedFieldTest(unittest.TestCase):
     self.assertEqual(golden_data, message.SerializeToString())
 
 
-@unittest.skipIf(api_implementation.Type() != 'cpp',
+@unittest.skipIf(api_implementation.Type() == 'python',
                  'explicit tests of the C++ implementation')
 @testing_refleaks.TestCase
 class OversizeProtosTest(unittest.TestCase):
 
-  @classmethod
-  def setUpClass(cls):
-    # At the moment, reference cycles between DescriptorPool and Message classes
-    # are not detected and these objects are never freed.
-    # To avoid errors with ReferenceLeakChecker, we create the class only once.
-    file_desc = """
-      name: "f/f.msg2"
-      package: "f"
-      message_type {
-        name: "msg1"
-        field {
-          name: "payload"
-          number: 1
-          label: LABEL_OPTIONAL
-          type: TYPE_STRING
-        }
-      }
-      message_type {
-        name: "msg2"
-        field {
-          name: "field"
-          number: 1
-          label: LABEL_OPTIONAL
-          type: TYPE_MESSAGE
-          type_name: "msg1"
-        }
-      }
-    """
-    pool = descriptor_pool.DescriptorPool()
-    desc = descriptor_pb2.FileDescriptorProto()
-    text_format.Parse(file_desc, desc)
-    pool.Add(desc)
-    cls.proto_cls = message_factory.MessageFactory(pool).GetPrototype(
-        pool.FindMessageTypeByName('f.msg2'))
+  def GenerateNestedProto(self, n):
+    msg = unittest_pb2.TestRecursiveMessage()
+    sub = msg
+    for _ in range(n):
+      sub = sub.a
+    sub.i = 0
+    return msg.SerializeToString()
 
-  def setUp(self):
-    self.p = self.proto_cls()
-    self.p.field.payload = 'c' * (1024 * 1024 * 64 + 1)
-    self.p_serialized = self.p.SerializeToString()
+  def testSucceedOkSizedProto(self):
+    msg = unittest_pb2.TestRecursiveMessage()
+    msg.ParseFromString(self.GenerateNestedProto(100))
 
   def testAssertOversizeProto(self):
-    from google.protobuf.pyext._message import SetAllowOversizeProtos
-    SetAllowOversizeProtos(False)
-    q = self.proto_cls()
-    try:
-      q.ParseFromString(self.p_serialized)
-    except message.DecodeError as e:
-      self.assertEqual(str(e), 'Error parsing message')
+    api_implementation._c_module.SetAllowOversizeProtos(False)
+    msg = unittest_pb2.TestRecursiveMessage()
+    with self.assertRaises(message.DecodeError) as context:
+      msg.ParseFromString(self.GenerateNestedProto(101))
+    self.assertIn('Error parsing message', str(context.exception))
 
   def testSucceedOversizeProto(self):
-    from google.protobuf.pyext._message import SetAllowOversizeProtos
-    SetAllowOversizeProtos(True)
-    q = self.proto_cls()
-    q.ParseFromString(self.p_serialized)
-    self.assertEqual(self.p.field.payload, q.field.payload)
+    api_implementation._c_module.SetAllowOversizeProtos(True)
+    msg = unittest_pb2.TestRecursiveMessage()
+    msg.ParseFromString(self.GenerateNestedProto(101))
 
 
 if __name__ == '__main__':
